@@ -10,7 +10,7 @@ class HMEQ_data(Dataset):
     '''
     data_df overrides csv_path
     '''
-    def __init__(self,csv_path:str=None, data_df:pd.DataFrame = None,preprocess:bool=True):
+    def __init__(self,csv_path:str=None, data_df:pd.DataFrame = None,preprocess:bool=True, tensor:bool=True,):
         super().__init__()
         if data_df is not None:
             data_df = data_df
@@ -28,9 +28,14 @@ class HMEQ_data(Dataset):
         if preprocess:
             feats = self._preprocessing()
         else:
-            feats = self.feat_df
-        self.feat_tensor = torch.tensor(feats)
-        self.target_tensor = torch.tensor(self.target_df.values)
+            feats = self.feat_df.values
+        if tensor:
+            self.feats = torch.tensor(feats)
+            self.targets = torch.tensor(self.target_df.values)
+        else:
+            self.feats = feats
+            self.targets = self.target_df.values
+        self.num_feats = self.feats.shape[1]
 
     def _preprocessing(self):
         '''
@@ -50,11 +55,11 @@ class HMEQ_data(Dataset):
         return feats
 
     def __len__(self):
-        return len(self.feat_tensor.size(0))
+        return self.feats.shape[0]
     
     def __getitem__(self, idx) -> tuple:
-        X = self.feat_tensor.select(0,idx)
-        y = self.target_tensor.select(0,idx)
+        X = self.feats.select(0,idx)
+        y = self.targets.select(0,idx)
         return X, y
 
 

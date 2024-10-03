@@ -1,3 +1,7 @@
 IRB-venv/
 PD/pd_data/
 LGD/lgd_data/
+.vscode/
+*.pyc
+wandb/
+models/
