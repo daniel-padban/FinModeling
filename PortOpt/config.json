@@ -1,0 +1,11 @@
+{
+    "seq_len":60,
+    "pred_len":12,
+    "start_date":"2022-01-01",
+    "end_date":"2024-01-01",
+
+    "batch_size":10,
+    "lr":3e-4
+
+
+}
