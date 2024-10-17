@@ -19,18 +19,13 @@ class SkipNN(nn.Module):
             nn.SiLU(),
             nn.BatchNorm1d(h3,),
         )
-        self.skip = nn.Sequential(
-            nn.Linear(in_feats,s1),
-            nn.SiLU(),
-        )
-        self.fc4 = nn.Linear((h3+s1),out)
+        self.fc4 = nn.Linear((h3+in_feats),out)
 
     def forward(self, x):
         x = x #main_net input
         skip_x = x #skip connection input
 
         x = self.main_net(x)
-        skip_x = self.skip(skip_x)
         joined_x = torch.cat((x,skip_x),1) #along feat dim (1)
         
         joined_x = nn.functional.silu(joined_x)

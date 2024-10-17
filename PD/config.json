@@ -1,6 +1,6 @@
 {
     "train_p":0.7,
-    "batch_size":20,
+    "batch_size":30,
 
     "h1":20,
     "h2":40,
@@ -8,5 +8,5 @@
     "s1":60,
 
     "lr":1e-4,
-    "epochs":40
+    "epochs":100
 }

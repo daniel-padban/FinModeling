@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from socket import PF_SYSTEM
 import torch
 import torch.nn as nn
@@ -25,23 +25,27 @@ class MPTCovMat():
         return cov_matrix
     
 class WeightOptimizer():
-    def __init__(self,num_iter:int,lr:float,cov_matrix:torch.Tensor,returns:torch.Tensor,risk_free:float):
+    def __init__(self,num_iter:int,lr:float,cov_matrix:torch.Tensor,returns:torch.Tensor,risk_free:float,risk_free_period:timedelta):
         self.num_iter = num_iter
         self.cov_matrix = cov_matrix
         self.returns = returns
         self.risk_free = risk_free
+        self.risk_free_period = risk_free_period
         self.num_assets = cov_matrix.shape[0]
         self.weights = nn.Parameter(torch.rand(self.num_assets,requires_grad=True).softmax(0)) #init weights and set to values 0-1
         self.optim = torch.optim.AdamW([self.weights],lr=lr, weight_decay=0.1)
 
-    def _sharpe_loss(self,weights:torch.Tensor,returns:torch.Tensor,cov_matrix,risk_free:float) -> tuple:
-        expected_returns = returns.to(dtype=weights.dtype).mean(0)
+    def _sharpe_loss(self,weights:torch.Tensor,returns:torch.Tensor,cov_matrix,risk_free:float,risk_free_period:timedelta) -> tuple:
+        avg_returns = returns.to(dtype=weights.dtype).mean(0)
         cov_matrix = cov_matrix.to(dtype=weights.dtype)
-        portfolio_return = torch.dot(weights,expected_returns)
+        portfolio_return = torch.dot(weights,avg_returns) #avg daily
         portfolio_var = torch.matmul(weights.T,torch.matmul(cov_matrix,weights))
         portfolio_std = torch.sqrt(portfolio_var)
         
-        sharpe_ratio = (portfolio_return-risk_free)/portfolio_std
+        rr_days = risk_free_period.days
+        daily_rr = (1+risk_free) ** (1/rr_days) - 1 
+        #acc_rr = (1+daily_rr)**(expected_returns.shape[0]) -1 
+        sharpe_ratio = (portfolio_return-daily_rr)/portfolio_std
 
         return sharpe_ratio, portfolio_return, portfolio_std
     
@@ -52,7 +56,7 @@ class WeightOptimizer():
         for i in range(self.num_iter):
             self.optim.zero_grad()
             self.alloc_weights = self.weights.softmax(0)
-            sharpe,pf_return,pf_std = self._sharpe_loss(self.alloc_weights,self.returns,self.cov_matrix,risk_free=self.risk_free)
+            sharpe,pf_return,pf_std = self._sharpe_loss(self.alloc_weights,self.returns,self.cov_matrix,risk_free=self.risk_free,risk_free_period=self.risk_free_period)
             neg_sharp = -sharpe
             neg_sharp.backward()
             self.optim.step()
@@ -73,8 +77,8 @@ if __name__ == '__main__':
     log_return_df = cov_matrix_obj.log_return_df
     cov_matrix = cov_matrix_obj.cov_matrix_tensor
     col_indices = cov_matrix_obj.col_indices
-
-    w_optimizer = WeightOptimizer(500,1e-3,torch.tensor(cov_matrix.values),torch.tensor(log_return_df.values),risk_free=0.001)
+    risk_free_period = timedelta(days=120)
+    w_optimizer = WeightOptimizer(500,1e-3,torch.tensor(cov_matrix.values),torch.tensor(log_return_df.values),risk_free=0.0027,risk_free_period=risk_free_period)
     sharpes,returns,stds = w_optimizer.optimize_weights()
     col_names = [col_indices[i] for i in sorted(col_indices.keys())]
     weights_df = pd.DataFrame(w_optimizer.alloc_weights.numpy(force=True), index=col_names,columns=['raw_weights'])

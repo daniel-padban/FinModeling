@@ -8,7 +8,6 @@ import torcheval.metrics
 import wandb
 import wandb.plot
 import wandb.sdk
-import warnings
 
 class ModelTrainer():
     def __init__(self,run:wandb.sdk.wandb_run.Run,model:torch.nn.Module, train_dataloader:DataLoader, test_dataloader:DataLoader,device,report_freq:int=100):
@@ -41,7 +40,7 @@ class ModelTrainer():
             self.optimizer.step()
             
             #get probs for metrics
-            probs = pred.softmax(0)
+            probs = pred.sigmoid()
             #probs = probs.long()
             y = y.long()
             most_probable = (probs >= 0.5).long() #most probable
@@ -50,11 +49,12 @@ class ModelTrainer():
             precision = torcheval.metrics.BinaryPrecision()
             recall = torcheval.metrics.BinaryRecall()
 
-            accuracy.update(most_probable,y)
-            precision.update(most_probable,y)
-            recall.update(most_probable,y)
+            accuracy.update(probs,y)
+            precision.update(probs,y)
+            recall.update(probs,y)
 
             if batch_n%self.report_freq == 0:
+                print('----- Train metrics -----')
                 print(f"Accuracy: {accuracy.compute()}")
                 print(f"Precision: {precision.compute()}")
                 print(f"Recall: {recall.compute()}")
@@ -88,11 +88,12 @@ class ModelTrainer():
             precision = torcheval.metrics.BinaryPrecision()
             recall = torcheval.metrics.BinaryRecall()
 
-            accuracy.update(most_probable,y)
-            precision.update(most_probable,y)
-            recall.update(most_probable,y)
+            accuracy.update(probs,y)
+            precision.update(probs,y)
+            recall.update(probs,y)
 
             if batch_n%self.report_freq == 0:
+                print('----- Test metrics -----')
                 print(f"Accuracy: {accuracy.compute()}")
                 print(f"Precision: {precision.compute()}")
                 print(f"Recall: {recall.compute()}")

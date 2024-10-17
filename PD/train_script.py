@@ -35,7 +35,6 @@ config_dict = read_json('PD/config.json')
 run_name = 'r1'
 run = wandb.init(name=run_name,project='IRB_ML',config=config_dict)
 
-
 train_p = float(run.config['train_p'])
 test_p = 1-train_p
 full_dataset = pd.read_csv('PD/pd_data/hmeq.csv')
