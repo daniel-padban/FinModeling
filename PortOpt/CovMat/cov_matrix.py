@@ -1,5 +1,7 @@
+from audioop import avg
 from datetime import date, timedelta
 from socket import PF_SYSTEM
+from turtle import down
 import torch
 import torch.nn as nn
 import yfinance as yf
@@ -24,51 +26,8 @@ class MPTCovMat():
         cov_matrix = self.log_return_df.cov(2,1)
         return cov_matrix
     
-class WeightOptimizer():
-    def __init__(self,num_iter:int,lr:float,cov_matrix:torch.Tensor,returns:torch.Tensor,risk_free:float,risk_free_period:timedelta):
-        self.num_iter = num_iter
-        self.cov_matrix = cov_matrix
-        self.returns = returns
-        self.risk_free = risk_free
-        self.risk_free_period = risk_free_period
-        self.num_assets = cov_matrix.shape[0]
-        self.weights = nn.Parameter(torch.rand(self.num_assets,requires_grad=True).softmax(0)) #init weights and set to values 0-1
-        self.optim = torch.optim.AdamW([self.weights],lr=lr, weight_decay=0.1)
-
-    def _sharpe_loss(self,weights:torch.Tensor,returns:torch.Tensor,cov_matrix,risk_free:float,risk_free_period:timedelta) -> tuple:
-        avg_returns = returns.to(dtype=weights.dtype).mean(0)
-        cov_matrix = cov_matrix.to(dtype=weights.dtype)
-        portfolio_return = torch.dot(weights,avg_returns) #avg daily
-        portfolio_var = torch.matmul(weights.T,torch.matmul(cov_matrix,weights))
-        portfolio_std = torch.sqrt(portfolio_var)
-        
-        rr_days = risk_free_period.days
-        daily_rr = (1+risk_free) ** (1/rr_days) - 1 
-        #acc_rr = (1+daily_rr)**(expected_returns.shape[0]) -1 
-        sharpe_ratio = (portfolio_return-daily_rr)/portfolio_std
-
-        return sharpe_ratio, portfolio_return, portfolio_std
-    
-    def optimize_weights(self):
-        sharpes = []
-        pf_returns = []
-        pf_stds = []
-        for i in range(self.num_iter):
-            self.optim.zero_grad()
-            self.alloc_weights = self.weights.softmax(0)
-            sharpe,pf_return,pf_std = self._sharpe_loss(self.alloc_weights,self.returns,self.cov_matrix,risk_free=self.risk_free,risk_free_period=self.risk_free_period)
-            neg_sharp = -sharpe
-            neg_sharp.backward()
-            self.optim.step()
-            sharpes.append(sharpe)
-            pf_returns.append(pf_return)
-            pf_stds.append(pf_std)
-        sharpes = torch.vstack(sharpes)
-        pf_returns = torch.vstack(pf_returns)
-        pf_stds = torch.vstack(pf_stds)
-        return sharpes, pf_returns, pf_stds
-    
 if __name__ == '__main__':
+    from optimizer import WeightOptimizer
     ticker_list =read_json('omxs30.json')
     tickers = yf.Tickers(ticker_list,)
     start = date(2022,1,1)

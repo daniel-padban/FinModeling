@@ -5,19 +5,22 @@ import numpy as np
 
 
 class BackTester():
-    def __init__(self,comp_weights,test_weights,start:date,end:date,tickers:yf.Tickers):
+    def __init__(self,test_weights,start:date,end:date,tickers:yf.Tickers,comp_weights=None,):
         '''
         
         :param comp_weights: weight of assets to compare against
         '''
-        comp_weights = comp_weights
-        test_weights = test_weights
+
+
 
         self.asset_data:pd.DataFrame = tickers.history(start=start,end=end,auto_adjust=True)['Close']
         daily_returns = self.asset_data.pct_change(1,).dropna()
         daily_returns.dropna(inplace=True)
 
-        self.comparison_portfolio_returns = daily_returns.dot(comp_weights)
+        if comp_weights is not None:
+            self.comparison_portfolio_returns = daily_returns.dot(comp_weights)
+        else:
+            self.comparison_portfolio_returns = None
         self.test_portfolio_returns = daily_returns.dot(test_weights)
         print('TESTER')
 
