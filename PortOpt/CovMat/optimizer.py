@@ -10,7 +10,7 @@ class WeightOptimizer():
         self.risk_free_period = risk_free_period
         self.num_assets = returns.shape[1]
         self.weights = nn.Parameter(torch.rand(self.num_assets,requires_grad=True).softmax(0)) #init weights and set to values 0-1
-        self.optim = torch.optim.AdamW([self.weights],lr=lr, weight_decay=0.1)
+        self.optim = torch.optim.AdamW([self.weights],lr=lr, weight_decay=0.1,maximize=True)
 
 
     def _sortino_loss(self,weights:torch.Tensor,returns:torch.Tensor,risk_free:float,risk_free_period:timedelta) -> tuple:
@@ -71,7 +71,7 @@ class WeightOptimizer():
         '''
         
          combines calmar ratio, omega ratio and sortino ratio into a loss function
-        Returns tuple (negative_cos, cos)
+        Returns tuple (cos, weighted avg return)
         :param alpha: weight of calmar ratio 
         :param beta: weight of omega ratio 
         :param gamma: weight of sortino ratio 
@@ -98,8 +98,7 @@ class WeightOptimizer():
             self.optim.zero_grad()
             self.alloc_weights = self.weights.softmax(0)
             cos_loss, pf_return = self._cos_criterion(self.returns,self.weights,self.risk_free,self.risk_free_period,alpha,beta,gamma)
-            neg_cos = -cos_loss
-            neg_cos.backward()
+            cos_loss.backward()
             self.optim.step()
             cos_losses.append(cos_loss)
             pf_returns.append(pf_return)
