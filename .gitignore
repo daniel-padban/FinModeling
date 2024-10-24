@@ -5,3 +5,4 @@ LGD/lgd_data/
 *.pyc
 wandb/
 models/
+weights.csv
