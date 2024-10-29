@@ -7,7 +7,7 @@ import torch.nn as nn
 import yfinance as yf
 import pandas as pd
 import numpy as np
-from JSONReader import read_json
+from CovMat.JSONReader import read_json
 
 class MPTCovMat():
     def __init__(self, tickers:yf.Tickers,start:date,end:date):

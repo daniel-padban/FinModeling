@@ -2,7 +2,7 @@ from faulthandler import cancel_dump_traceback_later
 import torch
 import torch.nn as nn
 from datetime import timedelta
-from tensorScaling import TensorMinMaxScaler
+from CovMat.tensorScaling import TensorMinMaxScaler
 
 class WeightOptimizer():
     def __init__(self,num_iter:int,lr:float,num_assets:int, risk_free:float,risk_free_period:timedelta):

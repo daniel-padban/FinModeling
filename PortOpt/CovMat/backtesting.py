@@ -11,8 +11,6 @@ class BackTester():
         :param comp_weights: weight of assets to compare against
         '''
 
-
-
         self.asset_data:pd.DataFrame = tickers.history(start=start,end=end,auto_adjust=True)['Close']
         daily_returns = self.asset_data.pct_change(1,).dropna()
         daily_returns.dropna(inplace=True)
