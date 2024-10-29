@@ -22,7 +22,7 @@ class BackTester():
         else:
             self.comparison_portfolio_returns = None
         self.test_portfolio_returns = daily_returns.dot(test_weights)
-        print('TESTER')
+        print('TESTING')
 
 
     def period_return(self,returns:pd.DataFrame,intervals_per_period=252):
