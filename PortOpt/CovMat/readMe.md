@@ -1,7 +1,7 @@
 ## Portfolio optimization inspired by Modern Portfolio Theory.
 ### Overview
 The contents of this directory contain the code used for my portfolio optimization project.
-The file `PortOptDemo.ipynb` contains a demo of the project with optimized weights and a graph of their performance.
+The file `AllocDemo.ipynb` contains a demo of the project with optimized weights and a graph of their performance.
 
 The optimization algorithm uses three metrics as optimization goals:
 - Calmar Ratio - To minimize sudden large losses
